@@ -71,6 +71,32 @@
             z-index: 1;
         }
 
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            z-index: 2;
+        }
+
+        .user-info button {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-family: 'Georgia', serif;
+        }
+
+        .user-info button:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
         .nav {
             display: flex;
             background: #F5E6D3;
@@ -111,6 +137,11 @@
             background: #D2691E;
         }
 
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .content {
             padding: 40px;
         }
@@ -131,6 +162,7 @@
 
         .form-group {
             margin-bottom: 25px;
+            position: relative;
         }
 
         label {
@@ -161,6 +193,41 @@
         textarea {
             resize: vertical;
             min-height: 120px;
+        }
+
+        /* Autocomplete styles */
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #8B5A3C;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .autocomplete-suggestion {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .autocomplete-suggestion:hover {
+            background: #FFF8F0;
+        }
+
+        .autocomplete-suggestion:last-child {
+            border-bottom: none;
         }
 
         .ingredient-input {
@@ -315,19 +382,160 @@
             40% { content: '..'; }
             60%, 100% { content: '...'; }
         }
+
+        /* Login/Auth styles */
+        .auth-container {
+            max-width: 450px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-container h2 {
+            color: #8B5A3C;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #F5E6D3;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #999;
+            transition: all 0.3s;
+            font-family: 'Georgia', serif;
+        }
+
+        .auth-tab.active {
+            color: #8B5A3C;
+            border-bottom: 3px solid #D2691E;
+            margin-bottom: -2px;
+        }
+
+        /* Admin panel styles */
+        .user-list {
+            margin-top: 20px;
+        }
+
+        .user-item {
+            background: #FFF8F0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-item-info {
+            flex: 1;
+        }
+
+        .user-item-actions select {
+            padding: 8px 12px;
+            border: 2px solid #D2B48C;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .role-badge.admin {
+            background: #8B5A3C;
+            color: white;
+        }
+
+        .role-badge.staff {
+            background: #D2691E;
+            color: white;
+        }
+
+        .role-badge.custom {
+            background: #5C4033;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Auth Container (shown when not logged in) -->
+    <div id="authContainer" class="auth-container" style="display: none;">
+        <h2>🥐 Bakery Recipe Manager</h2>
+        
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+            <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+        </div>
+
+        <div id="authMessage"></div>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter password">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()" style="width: 100%;">Login</button>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signupForm" style="display: none;">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="signupEmail" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="signupPassword" placeholder="Min 6 characters">
+            </div>
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="signupPasswordConfirm" placeholder="Re-enter password">
+            </div>
+            <button class="btn btn-primary" onclick="handleSignup()" style="width: 100%;">Sign Up</button>
+        </div>
+    </div>
+
+    <!-- Main App Container (shown when logged in) -->
+    <div id="appContainer" class="container" style="display: none;">
         <div class="header">
+            <div class="user-info">
+                <span id="userEmail"></span>
+                <span id="userRole" class="role-badge"></span>
+                <button onclick="handleLogout()">Logout</button>
+            </div>
             <h1>🥐 Bakery Recipe Manager</h1>
             <p>Manage your recipes with ease</p>
         </div>
 
         <div class="nav">
-            <button class="nav-btn active" onclick="showPage('add')">Add Recipe</button>
-            <button class="nav-btn" onclick="showPage('retrieve')">Scale Recipe</button>
-            <button class="nav-btn" onclick="showPage('view')">View All</button>
+            <button class="nav-btn active" onclick="showPage('add')" id="navAdd">Add Recipe</button>
+            <button class="nav-btn" onclick="showPage('retrieve')" id="navRetrieve">Scale Recipe</button>
+            <button class="nav-btn" onclick="showPage('view')" id="navView">View All</button>
+            <button class="nav-btn" onclick="showPage('admin')" id="navAdmin" style="display: none;">Admin</button>
         </div>
 
         <div class="content">
@@ -336,9 +544,10 @@
                 <h2 style="margin-bottom: 30px; color: #333;">Add New Recipe</h2>
                 <div id="addMessage"></div>
                 
-                <div class="form-group">
+                <div class="form-group autocomplete-container">
                     <label>Item Name</label>
-                    <input type="text" id="itemName" placeholder="e.g., Potato Chips">
+                    <input type="text" id="itemName" placeholder="e.g., Potato Chips" autocomplete="off">
+                    <div id="itemNameSuggestions" class="autocomplete-suggestions" style="display: none;"></div>
                 </div>
 
                 <div class="form-group">
@@ -365,7 +574,10 @@
                     <div class="ingredients-container">
                         <div id="ingredientsList">
                             <div class="ingredient-input">
-                                <input type="text" placeholder="Ingredient name (e.g., Oil)" class="ing-name" style="flex: 2;">
+                                <div style="flex: 2; position: relative;" class="autocomplete-container">
+                                    <input type="text" placeholder="Ingredient name (e.g., Oil)" class="ing-name" autocomplete="off">
+                                    <div class="ing-suggestions autocomplete-suggestions" style="display: none;"></div>
+                                </div>
                                 <input type="number" placeholder="Qty" class="ing-qty" style="flex: 1;" step="0.01">
                                 <select class="ing-unit" style="flex: 1;">
                                     <option value="kg">kg</option>
@@ -393,9 +605,10 @@
                 <h2 style="margin-bottom: 30px; color: #333;">Scale Recipe</h2>
                 <div id="retrieveMessage"></div>
 
-                <div class="form-group">
+                <div class="form-group autocomplete-container">
                     <label>Item Name</label>
-                    <input type="text" id="retrieveItemName" placeholder="e.g., Potato Chips">
+                    <input type="text" id="retrieveItemName" placeholder="e.g., Potato Chips" autocomplete="off">
+                    <div id="retrieveItemSuggestions" class="autocomplete-suggestions" style="display: none;"></div>
                 </div>
 
                 <div class="form-group">
@@ -427,6 +640,31 @@
                 <h2 style="margin-bottom: 30px; color: #333;">All Recipes</h2>
                 <div id="recipesList"></div>
             </div>
+
+            <!-- Admin Page -->
+            <div id="adminPage" class="page">
+                <h2 style="margin-bottom: 30px; color: #333;">Admin Panel</h2>
+                <div id="adminMessage"></div>
+
+                <div style="background: #FFF8F0; padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+                    <h3 style="color: #8B5A3C; margin-bottom: 20px;">Invite New User</h3>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="inviteEmail" placeholder="user@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Assign Role</label>
+                        <select id="inviteRole">
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="inviteUser()">Send Invitation</button>
+                </div>
+
+                <h3 style="color: #8B5A3C; margin-bottom: 20px;">Manage Users</h3>
+                <div id="userList" class="user-list"></div>
+            </div>
         </div>
     </div>
 
@@ -435,19 +673,264 @@
     
     <script>
         // ========== SUPABASE CONFIGURATION ==========
-        // REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
-        const SUPABASE_URL = 'https://fqierzbkoxkyfbdmkkvd.supabase.co';
+        const SUPABASE_URL = 'https://fqierzbkoxkyfbdmkkvd.supabase.com';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxaWVyemJrb3hreWZiZG1ra3ZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NDE4NjQsImV4cCI6MjA3NjMxNzg2NH0.uLWJuNZkhz_j0cZc0hGhFue3ey0ZtfnHzSsvEeB4gWM';
-        
-        // Initialize Supabase client
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ========== APP LOGIC ==========
+        // ========== APP STATE ==========
         let recipes = [];
+        let currentUser = null;
+        let userRole = null;
+        let itemNames = new Set();
+        let ingredientNames = new Set();
 
-        // Load recipes on page load
+        // ========== AUTH FUNCTIONS ==========
+        async function initAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                await loadUserRole();
+                showApp();
+            } else {
+                showAuth();
+            }
+
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    currentUser = session.user;
+                    await loadUserRole();
+                    showApp();
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    userRole = null;
+                    showAuth();
+                }
+            });
+        }
+
+        async function loadUserRole() {
+            try {
+                const { data, error } = await supabase
+                    .from('user_roles')
+                    .select('role')
+                    .eq('user_id', currentUser.id)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') throw error;
+                
+                userRole = data ? data.role : 'staff';
+                updateUIForRole();
+            } catch (error) {
+                console.error('Error loading user role:', error);
+                userRole = 'staff';
+                updateUIForRole();
+            }
+        }
+
+        function updateUIForRole() {
+            document.getElementById('userEmail').textContent = currentUser.email;
+            const roleBadge = document.getElementById('userRole');
+            roleBadge.textContent = userRole.toUpperCase();
+            roleBadge.className = `role-badge ${userRole}`;
+
+            const isAdmin = userRole === 'admin';
+            const isStaff = userRole === 'staff';
+
+            document.getElementById('navAdd').disabled = isStaff;
+            document.getElementById('navAdmin').style.display = isAdmin ? 'block' : 'none';
+            
+            if (isStaff) {
+                document.getElementById('navAdd').style.opacity = '0.5';
+            }
+        }
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const tabs = document.querySelectorAll('.auth-tab');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+                tabs[0].classList.add('active');
+            } else {
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'block';
+                tabs[1].classList.add('active');
+            }
+            
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showAuthMessage('Please fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+            } catch (error) {
+                console.error('Login error:', error);
+                showAuthMessage(error.message, 'error');
+            }
+        }
+
+        async function handleSignup() {
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupPasswordConfirm').value;
+
+            if (!email || !password || !confirmPassword) {
+                showAuthMessage('Please fill in all fields', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAuthMessage('Passwords do not match', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAuthMessage('Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                await supabase
+                    .from('user_roles')
+                    .insert([{ user_id: data.user.id, role: 'staff' }]);
+
+                showAuthMessage('Account created! Please check your email to verify.', 'success');
+                setTimeout(() => switchAuthTab('login'), 2000);
+            } catch (error) {
+                console.error('Signup error:', error);
+                showAuthMessage(error.message, 'error');
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+        }
+
+        function showAuth() {
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            loadRecipes();
+            if (userRole === 'admin') {
+                loadUsers();
+            }
+        }
+
+        function showAuthMessage(message, type) {
+            const element = document.getElementById('authMessage');
+            element.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        // ========== AUTOCOMPLETE FUNCTIONS ==========
+        function updateAutocomplete() {
+            itemNames.clear();
+            ingredientNames.clear();
+
+            recipes.forEach(recipe => {
+                itemNames.add(recipe.item_name);
+                recipe.ingredients.forEach(ing => {
+                    ingredientNames.add(ing.name);
+                });
+            });
+        }
+
+        function setupAutocomplete(inputElement, suggestionsElement, dataSet) {
+            inputElement.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                suggestionsElement.innerHTML = '';
+                
+                if (value.length === 0) {
+                    suggestionsElement.style.display = 'none';
+                    return;
+                }
+
+                const matches = Array.from(dataSet).filter(item => 
+                    item.toLowerCase().includes(value)
+                );
+
+                if (matches.length === 0) {
+                    suggestionsElement.style.display = 'none';
+                    return;
+                }
+
+                matches.forEach(match => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-suggestion';
+                    div.textContent = match;
+                    div.addEventListener('click', function() {
+                        inputElement.value = match;
+                        suggestionsElement.style.display = 'none';
+                    });
+                    suggestionsElement.appendChild(div);
+                });
+
+                suggestionsElement.style.display = 'block';
+            });
+
+            inputElement.addEventListener('blur', function() {
+                setTimeout(() => {
+                    suggestionsElement.style.display = 'none';
+                }, 200);
+            });
+        }
+
+        function initializeAutocomplete() {
+            const itemNameInput = document.getElementById('itemName');
+            const itemNameSuggestions = document.getElementById('itemNameSuggestions');
+            setupAutocomplete(itemNameInput, itemNameSuggestions, itemNames);
+
+            const retrieveItemInput = document.getElementById('retrieveItemName');
+            const retrieveItemSuggestions = document.getElementById('retrieveItemSuggestions');
+            setupAutocomplete(retrieveItemInput, retrieveItemSuggestions, itemNames);
+
+            setupIngredientAutocomplete();
+        }
+
+        function setupIngredientAutocomplete() {
+            const ingredientInputs = document.querySelectorAll('.ing-name');
+            ingredientInputs.forEach(input => {
+                const container = input.closest('.autocomplete-container');
+                if (!container) return;
+                
+                const suggestions = container.querySelector('.ing-suggestions');
+                if (!suggestions) return;
+
+                setupAutocomplete(input, suggestions, ingredientNames);
+            });
+        }
+
+        // ========== APP LOGIC ==========
         window.addEventListener('load', async () => {
-            await loadRecipes();
+            await initAuth();
         });
 
         async function loadRecipes() {
@@ -460,6 +943,8 @@
                 if (error) throw error;
                 
                 recipes = data || [];
+                updateAutocomplete();
+                initializeAutocomplete();
                 console.log('Recipes loaded:', recipes.length);
             } catch (error) {
                 console.error('Error loading recipes:', error);
@@ -468,19 +953,28 @@
         }
 
         function showPage(page) {
+            if (userRole === 'staff' && page === 'add') {
+                showMessage('addMessage', 'You do not have permission to add recipes. Contact an admin.', 'error');
+                return;
+            }
+
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             
             if (page === 'add') {
                 document.getElementById('addPage').classList.add('active');
-                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+                document.getElementById('navAdd').classList.add('active');
             } else if (page === 'retrieve') {
                 document.getElementById('retrievePage').classList.add('active');
-                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+                document.getElementById('navRetrieve').classList.add('active');
             } else if (page === 'view') {
                 document.getElementById('viewPage').classList.add('active');
-                document.querySelectorAll('.nav-btn')[2].classList.add('active');
+                document.getElementById('navView').classList.add('active');
                 displayAllRecipes();
+            } else if (page === 'admin') {
+                document.getElementById('adminPage').classList.add('active');
+                document.getElementById('navAdmin').classList.add('active');
+                loadUsers();
             }
         }
 
@@ -489,7 +983,10 @@
             const div = document.createElement('div');
             div.className = 'ingredient-input';
             div.innerHTML = `
-                <input type="text" placeholder="Ingredient name" class="ing-name" style="flex: 2;">
+                <div style="flex: 2; position: relative;" class="autocomplete-container">
+                    <input type="text" placeholder="Ingredient name" class="ing-name" autocomplete="off">
+                    <div class="ing-suggestions autocomplete-suggestions" style="display: none;"></div>
+                </div>
                 <input type="number" placeholder="Qty" class="ing-qty" style="flex: 1;" step="0.01">
                 <select class="ing-unit" style="flex: 1;">
                     <option value="kg">kg</option>
@@ -505,9 +1002,15 @@
                 </select>
             `;
             list.appendChild(div);
+            setupIngredientAutocomplete();
         }
 
         async function saveRecipe() {
+            if (userRole === 'staff') {
+                showMessage('addMessage', 'You do not have permission to add recipes', 'error');
+                return;
+            }
+
             const itemName = document.getElementById('itemName').value.trim();
             const itemQuantity = document.getElementById('itemQuantity').value.trim();
             const itemUnit = document.getElementById('itemUnit').value;
@@ -537,10 +1040,10 @@
                 item_name: itemName,
                 item_quantity: itemQuantity,
                 item_unit: itemUnit,
-                ingredients: ingredients
+                ingredients: ingredients,
+                created_by: currentUser.id
             };
 
-            // Disable button during save
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = true;
             saveBtn.textContent = 'Saving...';
@@ -556,13 +1059,15 @@
                 await loadRecipes();
                 showMessage('addMessage', 'Recipe saved successfully!', 'success');
                 
-                // Clear form
                 document.getElementById('itemName').value = '';
                 document.getElementById('itemQuantity').value = '';
                 document.getElementById('itemUnit').selectedIndex = 0;
                 document.getElementById('ingredientsList').innerHTML = `
                     <div class="ingredient-input">
-                        <input type="text" placeholder="Ingredient name (e.g., Oil)" class="ing-name" style="flex: 2;">
+                        <div style="flex: 2; position: relative;" class="autocomplete-container">
+                            <input type="text" placeholder="Ingredient name (e.g., Oil)" class="ing-name" autocomplete="off">
+                            <div class="ing-suggestions autocomplete-suggestions" style="display: none;"></div>
+                        </div>
                         <input type="number" placeholder="Qty" class="ing-qty" style="flex: 1;" step="0.01">
                         <select class="ing-unit" style="flex: 1;">
                             <option value="kg">kg</option>
@@ -578,6 +1083,7 @@
                         </select>
                     </div>
                 `;
+                setupIngredientAutocomplete();
             } catch (error) {
                 console.error('Error saving recipe:', error);
                 showMessage('addMessage', 'Error saving recipe: ' + error.message, 'error');
@@ -666,8 +1172,13 @@
                 });
                 
                 html += `
-                            </div>
-                            <button class="btn btn-danger" onclick="deleteRecipe(${recipe.id})">Delete Recipe</button>
+                            </div>`;
+                
+                if (userRole === 'admin') {
+                    html += `<button class="btn btn-danger" onclick="deleteRecipe(${recipe.id})">Delete Recipe</button>`;
+                }
+                
+                html += `
                         </div>
                     </div>
                 `;
@@ -677,6 +1188,11 @@
         }
 
         async function deleteRecipe(id) {
+            if (userRole !== 'admin') {
+                alert('You do not have permission to delete recipes');
+                return;
+            }
+
             if (!confirm('Are you sure you want to delete this recipe?')) return;
 
             try {
@@ -696,6 +1212,132 @@
             }
         }
 
+        // ========== ADMIN FUNCTIONS ==========
+        async function loadUsers() {
+            if (userRole !== 'admin') return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('user_roles')
+                    .select('*');
+
+                if (error) throw error;
+
+                displayUsers(data || []);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showMessage('adminMessage', 'Error loading users', 'error');
+            }
+        }
+
+        function displayUsers(users) {
+            const container = document.getElementById('userList');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">No users found</p>';
+                return;
+            }
+
+            let html = '';
+            users.forEach(user => {
+                if (user.user_id === currentUser.id) return;
+                
+                html += `
+                    <div class="user-item">
+                        <div class="user-item-info">
+                            <strong>${user.email || 'User ID: ' + user.user_id.substring(0, 8)}</strong>
+                            <span class="role-badge ${user.role}">${user.role.toUpperCase()}</span>
+                        </div>
+                        <div class="user-item-actions">
+                            <select onchange="changeUserRole('${user.user_id}', this.value)">
+                                <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>
+                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            </select>
+                            <button class="btn btn-danger" style="padding: 8px 16px; margin: 0;" onclick="removeUser('${user.user_id}')">Remove</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function inviteUser() {
+            if (userRole !== 'admin') {
+                showMessage('adminMessage', 'You do not have permission', 'error');
+                return;
+            }
+
+            const email = document.getElementById('inviteEmail').value.trim();
+            const role = document.getElementById('inviteRole').value;
+
+            if (!email) {
+                showMessage('adminMessage', 'Please enter an email address', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.admin.inviteUserByEmail(email);
+
+                if (error) throw error;
+
+                await supabase
+                    .from('user_roles')
+                    .insert([{ 
+                        user_id: data.user.id, 
+                        role: role,
+                        email: email 
+                    }]);
+
+                showMessage('adminMessage', `Invitation sent to ${email}`, 'success');
+                document.getElementById('inviteEmail').value = '';
+                loadUsers();
+            } catch (error) {
+                console.error('Error inviting user:', error);
+                showMessage('adminMessage', 'Error: ' + error.message, 'error');
+            }
+        }
+
+        async function changeUserRole(userId, newRole) {
+            if (userRole !== 'admin') return;
+
+            try {
+                const { error } = await supabase
+                    .from('user_roles')
+                    .update({ role: newRole })
+                    .eq('user_id', userId);
+
+                if (error) throw error;
+
+                showMessage('adminMessage', 'User role updated successfully', 'success');
+                loadUsers();
+            } catch (error) {
+                console.error('Error updating role:', error);
+                showMessage('adminMessage', 'Error updating role', 'error');
+            }
+        }
+
+        async function removeUser(userId) {
+            if (userRole !== 'admin') return;
+            
+            if (!confirm('Are you sure you want to remove this user?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('user_roles')
+                    .delete()
+                    .eq('user_id', userId);
+
+                if (error) throw error;
+
+                showMessage('adminMessage', 'User removed successfully', 'success');
+                loadUsers();
+            } catch (error) {
+                console.error('Error removing user:', error);
+                showMessage('adminMessage', 'Error removing user', 'error');
+            }
+        }
+
         function showMessage(elementId, message, type) {
             const element = document.getElementById(elementId);
             element.innerHTML = `<div class="${type}-message">${message}</div>`;
@@ -704,7 +1346,6 @@
             }, 3000);
         }
 
-        // Register service worker for PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
