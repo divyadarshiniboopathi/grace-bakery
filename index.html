@@ -248,7 +248,7 @@
 
   <script>
     // ===== CONFIG =====
-    const API = "https://script.google.com/macros/s/AKfycby4M9rvfa93Vs-r7r6vqknoi7SQvrpfTOvH5wpHkPUIKL6Hrry7fKoizt0N4dIbg6kU/exec"; // <-- set this
+    const API = "https://corsproxy.io/?https://script.google.com/macros/s/AKfycby4M9rvfa93Vs-r7r6vqknoi7SQvrpfTOvH5wpHkPUIKL6Hrry7fKoizt0N4dIbg6kU/exec";
 
     // ===== State =====
     let currentUser = null;     // { token, role, name, phone }
@@ -261,10 +261,17 @@
     const qsa = s => Array.from(document.querySelectorAll(s));
     const val = id => document.getElementById(id).value.trim();
 
-    async function api(body){
-      const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-      return r.json();
+    async function api(body) {
+        const form = new URLSearchParams();
+        form.append('payload', JSON.stringify(body));
+        const res = await fetch(API, {
+        method: 'POST',
+        body: form
+    // NOTE: no headers — keeps it a "simple request" (no CORS preflight)
+        });
+        return res.json();
     }
+
     function msg(elId, text, type){
       const el = document.getElementById(elId);
       el.innerHTML = `<div class="${type}-message">${text}</div>`;
