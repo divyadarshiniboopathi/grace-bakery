@@ -260,20 +260,20 @@
     const qsa = s => Array.from(document.querySelectorAll(s));
     const val = id => document.getElementById(id).value.trim();
 
-    async function api(body) {
-        const res = await fetch(API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
-        const text = await res.text();
-        try {
-            return JSON.parse(text);
-        }   catch {
-            console.log("Raw response:", text);
-            return { error: "Invalid JSON from server" };
-        }
+async function api(body) {
+    // Use GET with data parameter to bypass CORS
+    const url = `${API}?data=${encodeURIComponent(JSON.stringify(body))}`;
+    const res = await fetch(url, {
+        method: "GET"
+    });
+    const text = await res.text();
+    try {
+        return JSON.parse(text);
+    } catch {
+        console.log("Raw response:", text);
+        return { error: "Invalid JSON from server" };
     }
+}
 
 
     function msg(elId, text, type){
