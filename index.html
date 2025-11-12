@@ -284,14 +284,21 @@ async function api(body) {
     function showAuth(){ qs('#authContainer').style.display='block'; qs('#appContainer').style.display='none'; }
     function showApp(){ qs('#authContainer').style.display='none'; qs('#appContainer').style.display='block'; updateUIForRole(); loadRecipes(); if(currentUser.role==='admin') loadUsers(); }
 
-    function switchAuthTab(tsab){
-      const login = qs('#loginForm'); const signup = qs('#signupForm');
-      qsa('.auth-tab').forEach(t=>t.classList.remove('active'));
-      if(tab==='login'){ login.style.display='block'; signup.style.display='none'; qsa('.auth-tab')[0].classList.add('active'); }
-      else { login.style.display='none'; signup.style.display='block'; qsa('.auth-tab')[1].classList.add('active'); }
-      qs('#authMessage').innerHTML='';
-    }
-
+function switchAuthTab(tab){
+  const login = qs('#loginForm'); 
+  const signup = qs('#signupForm');
+  qsa('.auth-tab').forEach(t=>t.classList.remove('active'));
+  if(tab==='login'){ 
+    login.style.display='block'; 
+    signup.style.display='none'; 
+    qsa('.auth-tab')[0].classList.add('active'); 
+  } else { 
+    login.style.display='none'; 
+    signup.style.display='block'; 
+    qsa('.auth-tab')[1].classList.add('active'); 
+  }
+  qs('#authMessage').innerHTML='';
+}
     // ===== Auth (phone/password) =====
     function showAuthMessage(t, type){ msg('authMessage', t, type); }
 
