@@ -16,7 +16,7 @@
     .header::before{content:'';position:absolute;inset:0;background:url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><text x="10" y="50" font-size="40" opacity="0.1">🥖</text></svg>');opacity:.3}
     .header h1{font-size:2.8em;margin-bottom:10px;text-shadow:3px 3px 6px rgba(0,0,0,.4);font-weight:bold;letter-spacing:2px;position:relative;z-index:1}
     .header p{font-size:1.2em;opacity:.95;font-style:italic;position:relative;z-index:1}
-    .user-info{position:absolute;top:20px;right:20px;background:rgba(255,255,255,.2);padding:10px 20px;border-radius:25px;font-size:.9em;z-index:2}
+    .user-info{position:absolute;top:10px;right:20px;background:rgba(255,255,255,.2);padding:8px 16px;border-radius:25px;font-size:.85em;z-index:2;display:flex;align-items:center;gap:8px}
     .user-info button{background:rgba(255,255,255,.3);border:none;color:#fff;padding:5px 15px;border-radius:15px;cursor:pointer;margin-left:10px}
     .user-info button:hover{background:rgba(255,255,255,.4)}
     .nav{display:flex;background:#F5E6D3;border-bottom:3px solid #D2691E}
@@ -101,7 +101,7 @@
         <input type="tel" id="signupPhone" placeholder="e.g., 9876543210" />
       </div>
       <div class="form-group">
-        <label>Name (optional)</label>
+        <label>Name</label>
         <input type="text" id="signupName" placeholder="Your name" />
       </div>
       <div class="form-group">
@@ -125,7 +125,7 @@
         <button onclick="handleLogout()">Logout</button>
       </div>
       <h1>Grace Bakery - Recipe Manager</h1>
-      <p>Manage your recipes with grace</p>
+      <p>Manage your recipes with ease</p>
     </div>
 
     <div class="nav">
@@ -284,8 +284,7 @@ async function api(body) {
     function showAuth(){ qs('#authContainer').style.display='block'; qs('#appContainer').style.display='none'; }
     function showApp(){ qs('#authContainer').style.display='none'; qs('#appContainer').style.display='block'; updateUIForRole(); loadRecipes(); if(currentUser.role==='admin') loadUsers(); }
 
-    // ===== Auth Tabs =====
-    function switchAuthTab(tab){
+    function switchAuthTab(tsab){
       const login = qs('#loginForm'); const signup = qs('#signupForm');
       qsa('.auth-tab').forEach(t=>t.classList.remove('active'));
       if(tab==='login'){ login.style.display='block'; signup.style.display='none'; qsa('.auth-tab')[0].classList.add('active'); }
@@ -323,23 +322,35 @@ async function api(body) {
     }
 
     async function handleLogout(){
-      localStorage.removeItem('session');
-      currentUser = null;
-      showAuth();
-    }
+  localStorage.removeItem('session');
+  currentUser = null;
+  // Clear all input fields
+  qs('#loginPhone').value = '';
+  qs('#loginPassword').value = '';
+  qs('#signupPhone').value = '';
+  qs('#signupName').value = '';
+  qs('#signupPassword').value = '';
+  qs('#signupPasswordConfirm').value = '';
+  showAuth();
+}
 
-    function updateUIForRole(){
-      qs('#userPhone').textContent = currentUser?.phone || '';
-      const badge = qs('#userRole');
-      const role = (currentUser?.role || 'staff').toLowerCase();
-      badge.textContent = role.toUpperCase();
-      badge.className = `role-badge ${role}`;
+function updateUIForRole(){
+  qs('#userPhone').textContent = currentUser?.phone || '';
+  const badge = qs('#userRole');
+  const role = (currentUser?.role || 'staff').toLowerCase();
+  badge.textContent = role.toUpperCase();
+  badge.className = `role-badge ${role}`;
 
-      const isAdmin = role==='admin';
-      qs('#navAdd').disabled = !isAdmin;
-      qs('#navAdd').style.opacity = isAdmin ? '1' : '0.5';
-      qs('#navAdmin').style.display = isAdmin ? 'block' : 'none';
-    }
+  const isAdmin = role==='admin';
+  qs('#navAdd').disabled = !isAdmin;
+  qs('#navAdd').style.opacity = isAdmin ? '1' : '0.5';
+  qs('#navAdmin').style.display = isAdmin ? 'block' : 'none';
+  
+  // Show appropriate first page based on role
+  if (!isAdmin) {
+    showPage('retrieve'); // Staff see Scale Recipe first
+  }
+}
 
     // ===== Navigation =====
     function showPage(page){
