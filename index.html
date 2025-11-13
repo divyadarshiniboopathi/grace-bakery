@@ -12,7 +12,7 @@
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Georgia','Times New Roman',serif;background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url('https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1600') center/cover no-repeat fixed;min-height:100vh;padding:20px}
     .container{max-width:900px;margin:0 auto;background:rgba(255,255,255,.98);border-radius:15px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
-    .header{background:linear-gradient(135deg,#8B5A3C 0%,#D2691E 100%);color:#fff;padding:40px 30px;text-align:center;position:relative;overflow:hidden}
+    .header{background:linear-gradient(135deg,#8B5A3C 0%,#D2691E 100%);color:#fff;padding:50px 30px;text-align:center;position:relative;overflow:hidden}
     .header::before{content:'';position:absolute;inset:0;background:url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><text x="10" y="50" font-size="40" opacity="0.1">🥖</text></svg>');opacity:.3}
     .header h1{font-size:2.8em;margin-bottom:10px;text-shadow:3px 3px 6px rgba(0,0,0,.4);font-weight:bold;letter-spacing:2px;position:relative;z-index:1}
     .header p{font-size:1.2em;opacity:.95;font-style:italic;position:relative;z-index:1}
@@ -66,9 +66,43 @@
     .user-item-actions select{padding:8px 12px;border:2px solid #D2B48C;border-radius:5px;margin-right:10px}
     .role-badge{display:inline-block;padding:4px 12px;border-radius:12px;font-size:.85em;font-weight:600;margin-left:10px}
     .role-badge.admin{background:#8B5A3C;color:#fff}.role-badge.staff{background:#D2691E;color:#fff}
+    /* Prevent accidental horizontal scroll on small screens */
+    html, body { max-width:100%; }
+
+    /* Make the main container responsive */
+    .container { width: calc(100% - 40px); max-width: 900px; margin: 0 auto; }
+
+    /* Make nav buttons scrollable horizontally on small screens */
+    .nav { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .nav-btn { flex:0 0 auto; min-width:120px; }
+
+    /* Auth dialog wider on phones */
+    @media (max-width: 600px) {
+      .auth-container {
+        margin: 20px auto;
+        width: calc(100% - 28px);
+        max-width: 620px; /* slightly wider on phones */
+      }
+      .container { width: calc(100% - 20px); margin: 10px auto; }
+      body { padding: 10px; }
+      .header { padding: 60px 20px 30px 20px; } /* give header more top space on small screens */
+      .user-info { right:12px; padding:6px 12px; font-size:0.85em; }
+    }
+
   </style>
 </head>
 <body>
+  <!-- Loading overlay -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;z-index:9999;backdrop-filter:blur(2px);background:rgba(0,0,0,0.35);align-items:center;justify-content:center;">
+  <div style="background:#fff;padding:18px 22px;border-radius:10px;display:flex;gap:12px;align-items:center;">
+    <svg width="20" height="20" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" style="animation:spin 1s linear infinite;">
+      <circle cx="25" cy="25" r="20" stroke="#8B5A3C" stroke-width="5" stroke-linecap="round" fill="none" stroke-dasharray="31.4 62.8"></circle>
+    </svg>
+    <div style="color:#333;font-weight:600;">Loading…</div>
+  </div>
+</div>
+<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+
 
   <!-- AUTH -->
   <div id="authContainer" class="auth-container" style="display:none;">
@@ -224,7 +258,7 @@
         <h2 style="margin-bottom:30px;color:#333;">Admin Panel</h2>
         <div id="adminMessage"></div>
 
-        <div style="background:#FFF8F0;padding:25px;border-radius:10px;margin-bottom:30px;">
+        <!--removed->div style="background:#FFF8F0;padding:25px;border-radius:10px;margin-bottom:30px;">
           <h3 style="color:#8B5A3C;margin-bottom:20px;">Invite New User</h3>
           <div class="form-group">
             <label>Phone Number</label>
@@ -238,7 +272,7 @@
             </select>
           </div>
           <button class="btn btn-primary" onclick="inviteUser()">Send Invitation</button>
-        </div>
+        <!-/div-->
 
         <h3 style="color:#8B5A3C;margin-bottom:20px;">Manage Users</h3>
         <div id="userList" class="user-list"></div>
@@ -259,21 +293,31 @@
     const qs = s => document.querySelector(s);
     const qsa = s => Array.from(document.querySelectorAll(s));
     const val = id => document.getElementById(id).value.trim();
+    function showLoading(){ const o = qs('#loadingOverlay'); if(o) o.style.display='flex'; }
+    function hideLoading(){ const o = qs('#loadingOverlay'); if(o) o.style.display='none'; }
+
 
 async function api(body) {
-    // Use GET with data parameter to bypass CORS
-    const url = `${API}?data=${encodeURIComponent(JSON.stringify(body))}`;
-    const res = await fetch(url, {
-        method: "GET"
-    });
-    const text = await res.text();
+    showLoading();
     try {
-        return JSON.parse(text);
-    } catch {
-        console.log("Raw response:", text);
-        return { error: "Invalid JSON from server" };
+        // Use GET with data parameter to bypass CORS
+        const url = `${API}?data=${encodeURIComponent(JSON.stringify(body))}`;
+        const res = await fetch(url, { method: "GET" });
+        const text = await res.text();
+        try {
+            return JSON.parse(text);
+        } catch {
+            console.log("Raw response:", text);
+            return { error: "Invalid JSON from server" };
+        }
+    } catch (err) {
+        console.error('API error', err);
+        return { error: 'Network error' };
+    } finally {
+        hideLoading();
     }
 }
+
 
 
     function msg(elId, text, type){
@@ -342,7 +386,7 @@ function switchAuthTab(tab){
 }
 
 function updateUIForRole(){
-  qs('#userPhone').textContent = currentUser?.phone || '';
+  qs('#userPhone').textContent = currentUser?.name || currentUser?.phone || '';
   const badge = qs('#userRole');
   const role = (currentUser?.role || 'staff').toLowerCase();
   badge.textContent = role.toUpperCase();
@@ -561,21 +605,26 @@ function updateUIForRole(){
       if(r.error) return msg('adminMessage', r.error, 'error');
       displayUsers(r.users || []);
     }
-    function displayUsers(users){
-      const c = qs('#userList');
-      if(!users.length){ c.innerHTML = '<p style="text-align:center;color:#999;">No users found</p>'; return; }
-      c.innerHTML = users.map(u=> `
-        <div class="user-item">
-          <div><strong>${u.phone}</strong> <span class="role-badge ${u.role}">${u.role.toUpperCase()}</span></div>
-          <div class="user-item-actions">
-            <select onchange="changeUserRole('${u.phone}', this.value)">
-              <option value="staff" ${u.role==='staff'?'selected':''}>Staff</option>
-              <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
-            </select>
-            <button class="btn btn-danger" onclick="removeUser('${u.phone}')">Remove</button>
-          </div>
-        </div>`).join('');
-    }
+function displayUsers(users){
+  const c = qs('#userList');
+  if(!users.length){ c.innerHTML = '<p style="text-align:center;color:#999;">No users found</p>'; return; }
+  c.innerHTML = users.map(u=> `
+    <div class="user-item">
+      <div>
+        <strong>${u.name || '—'}</strong><br/>
+        <small>${u.phone}</small>
+        <span class="role-badge ${u.role}">${u.role.toUpperCase()}</span>
+      </div>
+      <div class="user-item-actions">
+        <select onchange="changeUserRole('${u.phone}', this.value)">
+          <option value="staff" ${u.role==='staff'?'selected':''}>Staff</option>
+          <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+        </select>
+        <button class="btn btn-danger" onclick="removeUser('${u.phone}')">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
     async function changeUserRole(phone, role){
       if((currentUser?.role)!=='admin') return;
       const r = await api({ action:'changeRole', token: currentUser.token, phone, role });
