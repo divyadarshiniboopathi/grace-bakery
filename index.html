@@ -68,14 +68,11 @@
     .role-badge.admin{background:#8B5A3C;color:#fff}.role-badge.staff{background:#D2691E;color:#fff}
     /* Prevent accidental horizontal scroll on small screens */
     html, body { max-width:100%; }
-
     /* Make the main container responsive */
     .container { width: calc(100% - 40px); max-width: 900px; margin: 0 auto; }
-
     /* Make nav buttons scrollable horizontally on small screens */
     .nav { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; }
     .nav-btn { flex:0 0 auto; min-width:120px; }
-
     /* Auth dialog wider on phones */
     @media (max-width: 600px) {
       .auth-container {
@@ -88,7 +85,34 @@
       .header { padding: 60px 20px 30px 20px; } /* give header more top space on small screens */
       .user-info { right:12px; padding:6px 12px; font-size:0.85em; }
     }
+    @media print {
 
+  /* Hide everything */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Only show the printed recipe */
+  .print-area, .print-area * {
+    visibility: visible !important;
+  }
+
+  /* Position the print area at the top left for clean printing */
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  /* Optional: tidy up print look */
+  .print-area {
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+  }
+}
   </style>
 </head>
 <body>
@@ -119,7 +143,7 @@
     <div id="loginForm">
       <div class="form-group">
         <label>Phone</label>
-        <input type="tel" id="loginPhone" placeholder="e.g., 9876543210" />
+        <input type="tel" id="loginPhone" maxlength="10" pattern="[0-9]{10}" placeholder="e.g., 9876543210" />
       </div>
       <div class="form-group">
         <label>Password</label>
@@ -132,7 +156,7 @@
     <div id="signupForm" style="display:none;">
       <div class="form-group">
         <label>Phone</label>
-        <input type="tel" id="signupPhone" placeholder="e.g., 9876543210" />
+        <input type="tel" id="signupPhone" maxlength="10" pattern="[0-9]{10}" placeholder="e.g., 9876543210" />
       </div>
       <div class="form-group">
         <label>Name</label>
@@ -226,8 +250,10 @@
 
         <div class="form-group autocomplete-container">
           <label>Item Name</label>
-          <input type="text" id="retrieveItemName" placeholder="e.g., Potato Chips" autocomplete="off"/>
-          <div id="retrieveItemSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+          <select id="retrieveItemName" style="width:100%;padding:12px 15px;border:2px solid #D2B48C;border-radius:8px;font-size:1em;">
+            <option value="">Select a recipe</option>
+          </select>
+
         </div>
 
         <div class="form-group">
@@ -348,6 +374,8 @@ function switchAuthTab(tab){
 
     async function handleSignup(){
       const phone = val('signupPhone');
+      if(!/^\d{10}$/.test(phone))
+      return showAuthMessage('Phone number must be exactly 10 digits','error');
       const name  = val('signupName');
       const pw    = val('signupPassword');
       const pw2   = val('signupPasswordConfirm');
@@ -363,6 +391,8 @@ function switchAuthTab(tab){
     async function handleLogin(){
       const phone = val('loginPhone');
       const pw    = val('loginPassword');
+      if(!/^\d{10}$/.test(phone)) 
+      return showAuthMessage('Phone number must be 10 digits','error');
       if(!phone || !pw) return showAuthMessage('Please fill in all fields','error');
       const r = await api({ action:'login', phone, password: pw });
       if(r.success){
@@ -478,7 +508,17 @@ function updateUIForRole(){
       try{
         const r = await api({ action:'getRecipes' });
         recipes = r.recipes || [];
-        updateAutocomplete(); initializeAutocomplete();
+        // Populate Scale Recipe dropdown
+const dropdown = qs('#retrieveItemName');
+if (dropdown) {
+  dropdown.innerHTML = '<option value="">Select a recipe</option>';
+  recipes.forEach(rec => {
+    const opt = document.createElement('option');
+    opt.value = rec.item_name;
+    opt.textContent = rec.item_name;
+    dropdown.appendChild(opt);
+  });
+}
       }catch(e){ console.error(e); msg('addMessage','Error loading recipes','error'); }
     }
 
@@ -565,7 +605,7 @@ function updateUIForRole(){
 
       const scale = parseFloat(desiredQty) / parseFloat(recipe.item_quantity);
       const html = `
-        <div class="recipe-card" style="margin-top:30px;">
+        <div class="recipe-card print-area" style="margin-top:30px;">
           <h3>${recipe.item_name}</h3>
           <div class="recipe-details">
             <p><strong>Original Quantity:</strong> ${recipe.item_quantity} ${recipe.item_unit}</p>
@@ -626,10 +666,17 @@ function displayUsers(users){
 }
 
     async function changeUserRole(phone, role){
-      if((currentUser?.role)!=='admin') return;
-      const r = await api({ action:'changeRole', token: currentUser.token, phone, role });
-      if(r.success) msg('adminMessage','User role updated','success'); else msg('adminMessage', r.error || 'Error updating role','error');
-    }
+  if((currentUser?.role)!=='admin') return;
+  const r = await api({ action:'changeRole', token: currentUser.token, phone, role });
+  if(r.success){
+    msg('adminMessage','User role updated','success');
+    // Immediately refresh the user list so new roles show up
+    await loadUsers();
+  } else {
+    msg('adminMessage', r.error || 'Error updating role','error');
+  }
+}
+
     async function removeUser(phone){
       if((currentUser?.role)!=='admin') return;
       if(!confirm('Remove this user?')) return;
