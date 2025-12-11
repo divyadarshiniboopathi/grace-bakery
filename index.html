@@ -332,6 +332,7 @@
     let recipes = [];
     let itemNames = new Set();
     let ingredientNames = new Set();
+    let editingRecipeName = null;
 
     // ===== Helpers =====
     const qs = s => document.querySelector(s);
@@ -545,66 +546,96 @@ if (dropdown) {
       }catch(e){ console.error(e); msg('addMessage','Error loading recipes','error'); }
     }
 
-    function resetAddForm(){
-      qs('#itemName').value=''; qs('#itemQuantity').value='';
-      qs('#itemUnit').selectedIndex=0;
-      qs('#ingredientsList').innerHTML = `
-        <div class="ingredient-input">
-          <div style="flex:2;position:relative" class="autocomplete-container">
-            <input type="text" placeholder="Ingredient name (e.g., Oil)" class="ing-name" autocomplete="off"/>
-            <div class="ing-suggestions autocomplete-suggestions" style="display:none;"></div>
-          </div>
-          <input type="number" placeholder="Qty" class="ing-qty" style="flex:1;" step="0.01"/>
-          <select class="ing-unit" style="flex:1;">
-            <option value="kg">kg</option>
-            <option value="g">g</option>
-            <option value="L">L</option>
-            <option value="ml">ml</option>
-            <option value="pieces">pieces</option>
-            <option value="tray">Tray</option>
-            <option value="box">Box</option>
-            <option value="tsp">tsp</option>
-            <option value="tbsp">tbsp</option>
-          </select>
-        </div>`;
-      setupIngredientAutocomplete();
-    }
+function resetAddForm(){
+  qs('#itemName').value=''; 
+  qs('#itemQuantity').value='';
+  qs('#itemUnit').selectedIndex=0;
+  const notesBox = qs('#itemNotes');
+  if (notesBox) notesBox.value = '';
+  qs('#ingredientsList').innerHTML = `
+    <div class="ingredient-input">
+      <div style="flex:2;position:relative" class="autocomplete-container">
+        <input type="text" placeholder="Ingredient name (e.g., Oil)" class="ing-name" autocomplete="off"/>
+        <div class="ing-suggestions autocomplete-suggestions" style="display:none;"></div>
+      </div>
+      <input type="number" placeholder="Qty" class="ing-qty" style="flex:1;" step="0.01"/>
+      <select class="ing-unit" style="flex:1;">
+        <option value="kg">kg</option>
+        <option value="g">g</option>
+        <option value="L">L</option>
+        <option value="ml">ml</option>
+        <option value="pieces">pieces</option>
+        <option value="tray">Tray</option>
+        <option value="box">Box</option>
+        <option value="tsp">tsp</option>
+        <option value="tbsp">tbsp</option>
+      </select>
+    </div>`;
+  setupIngredientAutocomplete();
 
-    async function saveRecipe(){
-      if((currentUser?.role)!=='admin'){ msg('addMessage','You do not have permission','error'); return; }
-      const item_name = val('itemName');
-      const item_quantity = val('itemQuantity');
-      const item_unit = qs('#itemUnit').value;
-      const notes = qs('#itemNotes') ? qs('#itemNotes').value.trim() : '';
-      const ings = qsa('#ingredientsList .ingredient-input').map(div=>({
-        name: div.querySelector('.ing-name').value.trim(),
-        quantity: div.querySelector('.ing-qty').value.trim(),
-        unit: div.querySelector('.ing-unit').value
-      })).filter(i=> i.name && i.quantity);
+  // Reset edit mode
+  editingRecipeName = null;
+  const btn = qs('#saveBtn');
+  if (btn) btn.textContent = 'Save Recipe';
+}
 
-      if(!item_name || !item_quantity || !ings.length)
-        return msg('addMessage','Please fill all fields','error');
+async function saveRecipe(){
+  if((currentUser?.role)!=='admin'){ msg('addMessage','You do not have permission','error'); return; }
+  const item_name = val('itemName');
+  const item_quantity = val('itemQuantity');
+  const item_unit = qs('#itemUnit').value;
+  const notes = qs('#itemNotes') ? qs('#itemNotes').value.trim() : '';
+  const ings = qsa('#ingredientsList .ingredient-input').map(div=>({
+    name: div.querySelector('.ing-name').value.trim(),
+    quantity: div.querySelector('.ing-qty').value.trim(),
+    unit: div.querySelector('.ing-unit').value
+  })).filter(i=> i.name && i.quantity);
 
-      const btn = qs('#saveBtn'); btn.disabled=true; btn.textContent='Saving...';
-     
-      const r = await api({ 
-        action:'addRecipe', 
-        token: currentUser.token, 
-        item_name,
-        item_quantity, 
-        item_unit, 
-        ingredients: ings,
-        notes   
-      });
+  if(!item_name || !item_quantity || !ings.length)
+    return msg('addMessage','Please fill all fields','error');
 
-        btn.disabled=false; 
-        btn.textContent='Save Recipe';
+  const btn = qs('#saveBtn'); btn.disabled=true; btn.textContent = editingRecipeName ? 'Updating...' : 'Saving...';
+  
+  let r;
+  if (editingRecipeName) {
+    // Update flow
+    r = await api({
+      action: 'updateRecipe',
+      token: currentUser.token,
+      original_name: editingRecipeName,
+      item_name,
+      item_quantity,
+      item_unit,
+      ingredients: ings,
+      notes
+    });
+  } else {
+    // Add flow
+    r = await api({ 
+      action:'addRecipe', 
+      token: currentUser.token, 
+      item_name,
+      item_quantity, 
+      item_unit, 
+      ingredients: ings,
+      notes   
+    });
+  }
 
-      if(r.success){ msg('addMessage','Recipe saved successfully!','success'); await loadRecipes(); resetAddForm(); }
-      else msg('addMessage', r.error || 'Save failed', 'error');
-    }
+  btn.disabled=false; 
+  btn.textContent='Save Recipe';
 
-  function displayAllRecipes(){
+  if(r.success){ 
+    msg('addMessage', editingRecipeName ? 'Recipe updated successfully!' : 'Recipe saved successfully!','success'); 
+    editingRecipeName = null; // reset edit state
+    await loadRecipes(); 
+    resetAddForm(); 
+  }
+  else msg('addMessage', r.error || (editingRecipeName ? 'Update failed' : 'Save failed'), 'error');
+}
+
+
+function displayAllRecipes(){
   const container = qs('#recipesList');
   if(!recipes.length){ 
     container.innerHTML = '<div class="no-recipes">No recipes saved yet. Add your first recipe!</div>'; 
@@ -616,19 +647,20 @@ if (dropdown) {
       <h3>${recipe.item_name}</h3>
       <div class="recipe-details">
         <p><strong>Quantity:</strong> ${recipe.item_quantity} ${recipe.item_unit}</p>
-        ${recipe.notes ? `<p><strong>Notes:</strong> ${recipe.notes}</p>` : ''}  <!-- NEW -->
+        ${recipe.notes ? `<p><strong>Notes:</strong> ${recipe.notes}</p>` : ''}
         <p><strong>Ingredients:</strong></p>
         <div class="ingredient-list">
           ${recipe.ingredients.map(ing=>`<p>• ${ing.name}: ${ing.quantity} ${ing.unit}</p>`).join('')}
         </div>
-        ${currentUser?.role==='admin' 
-          ? `<button class="btn btn-danger" onclick="deleteRecipe('${encodeURIComponent(recipe.item_name)}')">Delete</button>` 
-          : ''
-        }
+        ${currentUser?.role==='admin' ? `
+          <button class="btn btn-secondary" onclick="startEditRecipe('${encodeURIComponent(recipe.item_name)}')">Edit</button>
+          <button class="btn btn-danger" style="margin-left:10px" onclick="deleteRecipe('${encodeURIComponent(recipe.item_name)}')">Delete</button>
+        ` : ''}
         <button class="btn btn-secondary" style="margin-left:10px" onclick="printRecipe('${encodeURIComponent(recipe.item_name)}')">Print</button>
       </div>
     </div>`).join('');
 }
+
 
     async function deleteRecipe(itemNameEnc){
       if((currentUser?.role)!=='admin') return alert('Not allowed');
@@ -638,6 +670,59 @@ if (dropdown) {
       if(r.success){ await loadRecipes(); displayAllRecipes(); msg('addMessage','Recipe deleted','success'); }
       else alert(r.error || 'Delete failed');
     }
+
+    function startEditRecipe(nameEnc){
+  if((currentUser?.role)!=='admin'){ msg('addMessage','You do not have permission','error'); return; }
+  const name = decodeURIComponent(nameEnc);
+  const recipe = recipes.find(r => r.item_name === name);
+  if(!recipe) { msg('addMessage','Recipe not found','error'); return; }
+
+  // Set editing state
+  editingRecipeName = recipe.item_name;
+
+  // Switch to Add page and fill form
+  showPage('add');
+
+  qs('#itemName').value = recipe.item_name;
+  qs('#itemQuantity').value = recipe.item_quantity;
+  qs('#itemUnit').value = recipe.item_unit;
+  const notesBox = qs('#itemNotes');
+  if (notesBox) notesBox.value = recipe.notes || '';
+
+  // Rebuild ingredient inputs
+  const list = qs('#ingredientsList');
+  list.innerHTML = '';
+  (recipe.ingredients || []).forEach(ing => {
+    const div = document.createElement('div');
+    div.className = 'ingredient-input';
+    div.innerHTML = `
+      <div style="flex:2;position:relative" class="autocomplete-container">
+        <input type="text" placeholder="Ingredient name (e.g., Oil)" class="ing-name" autocomplete="off" value="${(ing.name||'').replace(/"/g,'&quot;')}" />
+        <div class="ing-suggestions autocomplete-suggestions" style="display:none;"></div>
+      </div>
+      <input type="number" placeholder="Qty" class="ing-qty" style="flex:1;" step="0.01" value="${ing.quantity}" />
+      <select class="ing-unit" style="flex:1;">
+        <option value="kg">kg</option>
+        <option value="g">g</option>
+        <option value="L">L</option>
+        <option value="ml">ml</option>
+        <option value="pieces">pieces</option>
+        <option value="tray">Tray</option>
+        <option value="box">Box</option>
+        <option value="tsp">tsp</option>
+        <option value="tbsp">tbsp</option>
+      </select>`;
+    list.appendChild(div);
+    div.querySelector('.ing-unit').value = ing.unit;
+  });
+
+  setupIngredientAutocomplete();
+
+  // Update button text so admin knows it's update mode
+  const btn = qs('#saveBtn');
+  if (btn) btn.textContent = 'Update Recipe';
+}
+
 
     // ===== Scaling & Print =====
     function scaleRecipe(){
