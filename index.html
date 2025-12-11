@@ -210,10 +210,15 @@
           <div style="display:flex;gap:10px;">
             <input type="number" id="itemQuantity" placeholder="e.g., 10" style="flex:2;" step="0.01"/>
             <select id="itemUnit" style="flex:1;">
-              <option value="kg">kg</option><option value="g">g</option><option value="L">L</option>
-              <option value="ml">ml</option><option value="lbs">lbs</option><option value="oz">oz</option>
-              <option value="cups">cups</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">L</option>
+              <option value="ml">ml</option>
               <option value="pieces">pieces</option>
+              <option value="tray">Tray</option>
+              <option value="box">Box</option>
+              <option value="tsp">tsp</option>
+              <option value="tbsp">tbsp</option>
             </select>
           </div>
         </div>
@@ -229,17 +234,25 @@
                 </div>
                 <input type="number" placeholder="Qty" class="ing-qty" style="flex:1;" step="0.01"/>
                 <select class="ing-unit" style="flex:1;">
-                  <option value="kg">kg</option><option value="g">g</option><option value="L">L</option>
-                  <option value="ml">ml</option><option value="lbs">lbs</option><option value="oz">oz</option>
-                  <option value="cups">cups</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="L">L</option>
+                  <option value="ml">ml</option>
                   <option value="pieces">pieces</option>
+                  <option value="tray">Tray</option>
+                  <option value="box">Box</option>
+                  <option value="tsp">tsp</option>
+                  <option value="tbsp">tbsp</option>
                 </select>
               </div>
             </div>
             <button class="btn btn-secondary" onclick="addIngredientField()">+ Add Ingredient</button>
           </div>
         </div>
-
+        <div class="form-group">
+          <label>Notes (for reference)</label>
+          <textarea id="itemNotes" placeholder="Any extra notes about this recipe?"></textarea>
+        </div>
         <button id="saveBtn" class="btn btn-primary" onclick="saveRecipe()">Save Recipe</button>
       </div>
 
@@ -261,11 +274,16 @@
           <div style="display:flex;gap:10px;">
             <input type="number" id="retrieveQuantity" placeholder="e.g., 3" style="flex:2;" step="0.01"/>
             <select id="retrieveUnit" style="flex:1;">
-              <option value="kg">kg</option><option value="g">g</option><option value="L">L</option>
-              <option value="ml">ml</option><option value="lbs">lbs</option><option value="oz">oz</option>
-              <option value="cups">cups</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">L</option>
+              <option value="ml">ml</option>
               <option value="pieces">pieces</option>
-            </select>
+              <option value="tray">Tray</option>
+              <option value="box">Box</option>
+              <option value="tsp">tsp</option>
+              <option value="tbsp">tbsp</option>
+            </select> 
           </div>
         </div>
 
@@ -458,10 +476,15 @@ function updateUIForRole(){
         </div>
         <input type="number" placeholder="Qty" class="ing-qty" style="flex:1;" step="0.01"/>
         <select class="ing-unit" style="flex:1;">
-          <option value="kg">kg</option><option value="g">g</option><option value="L">L</option>
-          <option value="ml">ml</option><option value="lbs">lbs</option><option value="oz">oz</option>
-          <option value="cups">cups</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option>
-          <option value="pieces">pieces</option>
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="L">L</option>
+            <option value="ml">ml</option>
+            <option value="pieces">pieces</option>
+            <option value="tray">Tray</option>
+            <option value="box">Box</option>
+            <option value="tsp">tsp</option>
+            <option value="tbsp">tbsp</option>
         </select>`;
       list.appendChild(div);
       setupIngredientAutocomplete();
@@ -533,10 +556,15 @@ if (dropdown) {
           </div>
           <input type="number" placeholder="Qty" class="ing-qty" style="flex:1;" step="0.01"/>
           <select class="ing-unit" style="flex:1;">
-            <option value="kg">kg</option><option value="g">g</option><option value="L">L</option>
-            <option value="ml">ml</option><option value="lbs">lbs</option><option value="oz">oz</option>
-            <option value="cups">cups</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option>
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="L">L</option>
+            <option value="ml">ml</option>
             <option value="pieces">pieces</option>
+            <option value="tray">Tray</option>
+            <option value="box">Box</option>
+            <option value="tsp">tsp</option>
+            <option value="tbsp">tbsp</option>
           </select>
         </div>`;
       setupIngredientAutocomplete();
@@ -547,6 +575,7 @@ if (dropdown) {
       const item_name = val('itemName');
       const item_quantity = val('itemQuantity');
       const item_unit = qs('#itemUnit').value;
+      const notes = qs('#itemNotes') ? qs('#itemNotes').value.trim() : '';
       const ings = qsa('#ingredientsList .ingredient-input').map(div=>({
         name: div.querySelector('.ing-name').value.trim(),
         quantity: div.querySelector('.ing-qty').value.trim(),
@@ -557,30 +586,49 @@ if (dropdown) {
         return msg('addMessage','Please fill all fields','error');
 
       const btn = qs('#saveBtn'); btn.disabled=true; btn.textContent='Saving...';
-      const r = await api({ action:'addRecipe', token: currentUser.token, item_name, item_quantity, item_unit, ingredients: ings });
-      btn.disabled=false; btn.textContent='Save Recipe';
+     
+      const r = await api({ 
+        action:'addRecipe', 
+        token: currentUser.token, 
+        item_name,
+        item_quantity, 
+        item_unit, 
+        ingredients: ings,
+        notes   
+      });
+
+        btn.disabled=false; 
+        btn.textContent='Save Recipe';
 
       if(r.success){ msg('addMessage','Recipe saved successfully!','success'); await loadRecipes(); resetAddForm(); }
       else msg('addMessage', r.error || 'Save failed', 'error');
     }
 
-    function displayAllRecipes(){
-      const container = qs('#recipesList');
-      if(!recipes.length){ container.innerHTML = '<div class="no-recipes">No recipes saved yet. Add your first recipe!</div>'; return; }
-      container.innerHTML = recipes.map(recipe => `
-        <div class="recipe-card">
-          <h3>${recipe.item_name}</h3>
-          <div class="recipe-details">
-            <p><strong>Quantity:</strong> ${recipe.item_quantity} ${recipe.item_unit}</p>
-            <p><strong>Ingredients:</strong></p>
-            <div class="ingredient-list">
-              ${recipe.ingredients.map(ing=>`<p>• ${ing.name}: ${ing.quantity} ${ing.unit}</p>`).join('')}
-            </div>
-            ${currentUser?.role==='admin' ? `<button class="btn btn-danger" onclick="deleteRecipe('${encodeURIComponent(recipe.item_name)}')">Delete</button>` : ''}
-            <button class="btn btn-secondary" style="margin-left:10px" onclick="printRecipe('${encodeURIComponent(recipe.item_name)}')">Print</button>
-          </div>
-        </div>`).join('');
-    }
+  function displayAllRecipes(){
+  const container = qs('#recipesList');
+  if(!recipes.length){ 
+    container.innerHTML = '<div class="no-recipes">No recipes saved yet. Add your first recipe!</div>'; 
+    return; 
+  }
+
+  container.innerHTML = recipes.map(recipe => `
+    <div class="recipe-card">
+      <h3>${recipe.item_name}</h3>
+      <div class="recipe-details">
+        <p><strong>Quantity:</strong> ${recipe.item_quantity} ${recipe.item_unit}</p>
+        ${recipe.notes ? `<p><strong>Notes:</strong> ${recipe.notes}</p>` : ''}  <!-- NEW -->
+        <p><strong>Ingredients:</strong></p>
+        <div class="ingredient-list">
+          ${recipe.ingredients.map(ing=>`<p>• ${ing.name}: ${ing.quantity} ${ing.unit}</p>`).join('')}
+        </div>
+        ${currentUser?.role==='admin' 
+          ? `<button class="btn btn-danger" onclick="deleteRecipe('${encodeURIComponent(recipe.item_name)}')">Delete</button>` 
+          : ''
+        }
+        <button class="btn btn-secondary" style="margin-left:10px" onclick="printRecipe('${encodeURIComponent(recipe.item_name)}')">Print</button>
+      </div>
+    </div>`).join('');
+}
 
     async function deleteRecipe(itemNameEnc){
       if((currentUser?.role)!=='admin') return alert('Not allowed');
