@@ -1,21 +1,22 @@
 {
-  "name": "Bakery Recipe Manager",
-  "short_name": "Recipes",
+  "name": "Grace Bakery Recipe Manager",
+  "short_name": "Grace Bakery",
   "description": "Manage and scale bakery recipes",
-  "start_url": "/",
+  "start_url": "/grace-bakery/index.html",
+  "scope": "/grace-bakery/",
   "display": "standalone",
   "background_color": "#8B5A3C",
   "theme_color": "#8B5A3C",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon-1.png",
+      "src": "/grace-bakery/icon-1.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon-2.png",
+      "src": "/grace-bakery/icon-2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
