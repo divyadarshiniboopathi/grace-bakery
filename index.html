@@ -186,6 +186,26 @@
       <p>Manage your recipes with ease</p>
     </div>
 
+    <button id="installBtn"
+  style="
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    z-index:1000;
+    padding:12px 18px;
+    border-radius:30px;
+    border:none;
+    background:#8B5A3C;
+    color:white;
+    font-weight:600;
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    display:none;
+    cursor:pointer;
+  ">
+  Install App
+</button>
+
+
     <div class="nav">
       <button id="navAdd" class="nav-btn active" onclick="showPage('add')">Add Recipe</button>
       <button id="navRetrieve" class="nav-btn" onclick="showPage('retrieve')">Scale Recipe</button>
@@ -836,6 +856,48 @@ function displayUsers(users){
         try{ await navigator.serviceWorker.register('sw.js'); }catch(e){ console.log('SW failed', e); }
       }
     });
+    let deferredPrompt;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Stop browser auto-prompt
+  e.preventDefault();
+
+  // Save the event
+  deferredPrompt = e;
+
+  // Show install button
+  installBtn.style.display = 'block';
+
+  // Optional: auto-suggest once
+  setTimeout(() => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+    }
+  }, 2000);
+});
+
+// On button click
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+  const choice = await deferredPrompt.userChoice;
+
+  if (choice.outcome === 'accepted') {
+    console.log('User installed the app');
+  }
+
+  deferredPrompt = null;
+  installBtn.style.display = 'none';
+});
+
+// Hide button once installed
+window.addEventListener('appinstalled', () => {
+  console.log('App installed');
+  installBtn.style.display = 'none';
+});
+
   </script>
 </body>
 </html>
